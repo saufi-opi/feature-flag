@@ -230,6 +230,7 @@ cli = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "pytest" },
 ]
 
@@ -244,7 +245,10 @@ requires-dist = [
 provides-extras = ["cli", "api", "all"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.0.2" }]
+dev = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pytest", specifier = ">=9.0.2" },
+]
 
 [[package]]
 name = "greenlet"
