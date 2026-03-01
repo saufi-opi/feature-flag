@@ -1,0 +1,9 @@
+services:
+  cli:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cli
+    image: feature-flag-cli
+    volumes:
+      - ../:/app
+    command: ["--help"]

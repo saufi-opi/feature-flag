@@ -1,0 +1,37 @@
+# Use a slim Python 3.11 image as the base
+FROM python:3.11-slim
+
+# Set environment variables:
+# PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
+# PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Install system dependencies required for building Python packages,
+# then clean up the apt cache to keep the image lightweight
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency specifications first to leverage Docker build cache
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies
+RUN uv pip install --system --no-cache -r pyproject.toml
+
+# Copy source code
+COPY core/ ./core
+COPY infrastructure/ ./infrastructure
+COPY cli/ ./cli
+COPY main_cli.py ./
+
+# Set the default command to show the CLI help text
+ENTRYPOINT ["python", "main_cli.py"]
+CMD ["--help"]

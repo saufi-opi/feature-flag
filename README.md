@@ -71,3 +71,44 @@ feature-flag-engine/
 The evaluation priority chain is fully dynamic. Adding a novel override dimension (like `tenant_id` or `cohort_identifier`) requires **no logic modifications** throughout the codebase. 
 
 The evaluation context accepts a dynamic dictionary, and the engine evaluates based on the instantiated precedence list (e.g., `lookup_chain=["user", "group", "region"]`), keeping the system perfectly decoupled and infinitely extensible.
+
+## Running the CLI
+
+### Option 1: Native Python (Fastest)
+If you have Python and `uv` installed on your machine, you can run the CLI instantly without container overhead:
+
+```bash
+# See all available commands
+uv run python main_cli.py --help
+
+# Create a new global flag
+uv run python main_cli.py create-flag dark_mode --enabled
+
+# List all flags
+uv run python main_cli.py list-flags
+
+# Set a context-specific override
+uv run python main_cli.py set-override dark_mode user alice --disabled
+
+# Evaluate the flag (Inherits the override priority)
+uv run python main_cli.py evaluate dark_mode --user alice
+
+# Delete a flag and cascade delete its overrides
+uv run python main_cli.py delete-flag dark_mode
+```
+
+### Option 2: Docker Compose (Isolated)
+If you don't have Python installed, or prefer to keep your host machine clean, you can run the CLI through Docker. A custom lightweight image is built specifically for the CLI that safely mounts your local directory so the SQLite database persists across runs.
+
+*Note: Use `run` instead of `up` to pass commands directly to the container.*
+
+```bash
+# See all available commands
+docker compose -f docker/docker-compose.cli.yml run --rm cli --help
+
+# Create a new global flag
+docker compose -f docker/docker-compose.cli.yml run --rm cli create-flag dark_mode --enabled
+
+# Evaluate the resulting flag precedence
+docker compose -f docker/docker-compose.cli.yml run --rm cli evaluate dark_mode --group staff
+```
