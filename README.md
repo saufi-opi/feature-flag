@@ -78,23 +78,34 @@ The evaluation context accepts a dynamic dictionary, and the engine evaluates ba
 If you have Python and `uv` installed on your machine, you can run the CLI instantly without container overhead:
 
 ```bash
+# Create a virtual environment
+uv venv
+
+# Activate it (Mac/Linux)
+source .venv/bin/activate
+# Or on Windows:
+.venv\Scripts\activate
+
+# Install the CLI dependencies
+uv sync --extra cli
+
 # See all available commands
-uv run python main_cli.py --help
+uv run python -m cli.main --help
 
 # Create a new global flag
-uv run python main_cli.py create-flag dark_mode --enabled
+uv run python -m cli.main create-flag dark_mode --enabled
 
 # List all flags
-uv run python main_cli.py list-flags
+uv run python -m cli.main list-flags
 
 # Set a context-specific override
-uv run python main_cli.py set-override dark_mode user alice --disabled
+uv run python -m cli.main set-override dark_mode user alice --disabled
 
 # Evaluate the flag (Inherits the override priority)
-uv run python main_cli.py evaluate dark_mode --user alice
+uv run python -m cli.main evaluate dark_mode --user alice
 
 # Delete a flag and cascade delete its overrides
-uv run python main_cli.py delete-flag dark_mode
+uv run python -m cli.main delete-flag dark_mode
 ```
 
 ### Option 2: Docker Compose (Isolated)
@@ -112,3 +123,36 @@ docker compose -f docker/docker-compose.cli.yml run --rm cli create-flag dark_mo
 # Evaluate the resulting flag precedence
 docker compose -f docker/docker-compose.cli.yml run --rm cli evaluate dark_mode --group staff
 ```
+
+## Running the API
+
+The Feature Flag Engine also includes a fully functional REST API built with FastAPI. It uses the exact same core engine and SQLite database as the CLI.
+
+### Option 1: Native Python (Fastest)
+If you have Python and `uv` installed, you can run the API server directly:
+
+```bash
+# Create a virtual environment (if you haven't already)
+uv venv
+
+# Activate it (Mac/Linux)
+source .venv/bin/activate
+# Or on Windows:
+.venv\Scripts\activate
+
+# Install the API dependencies
+uv sync --extra api
+
+# Run the FastAPI development server
+uv run uvicorn api.main:app --reload
+```
+
+### Option 2: Docker Compose (Isolated)
+You can also run the API entirely within an isolated Docker container. 
+
+```bash
+# Start the API server (add -d to run in the background)
+docker compose -f docker/docker-compose.api.yml up api
+```
+
+Once running, navigate to [http://localhost:8000/docs](http://localhost:8000/docs) in your browser to interact with the interactive Swagger UI.

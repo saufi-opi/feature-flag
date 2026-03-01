@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: feature-flag-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../:/app
+    command: ["uvicorn", "api.main:app", "--workers", "4", "--host", "0.0.0.0", "--port", "8000"]

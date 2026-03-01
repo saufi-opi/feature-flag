@@ -1,0 +1,35 @@
+# Use a slim Python 3.13 image as the base
+FROM python:3.13-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency specifications first to leverage Docker build cache
+COPY pyproject.toml uv.lock ./
+
+# Fast, hermetic install targeting just the base system + API dependencies
+RUN uv pip install --system --no-cache ".[api]"
+
+# Copy source code including API layer (No CLI layer needed here)
+COPY core/ ./core
+COPY infrastructure/ ./infrastructure
+COPY api/ ./api
+
+# Expose the API port
+EXPOSE 8000
+
+# Set the entrypoint to run the FastAPI app via Uvicorn
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

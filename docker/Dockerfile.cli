@@ -1,5 +1,5 @@
-# Use a slim Python 3.11 image as the base
-FROM python:3.11-slim
+# Use a slim Python 3.13 image as the base
+FROM python:3.13-slim
 
 # Set environment variables:
 # PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
@@ -23,15 +23,14 @@ WORKDIR /app
 # Copy dependency specifications first to leverage Docker build cache
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
-RUN uv pip install --system --no-cache -r pyproject.toml
+# Fast, hermetic install targeting just the base system + CLI dependencies
+RUN uv pip install --system --no-cache ".[cli]"
 
 # Copy source code
 COPY core/ ./core
 COPY infrastructure/ ./infrastructure
 COPY cli/ ./cli
-COPY main_cli.py ./
 
-# Set the default command to show the CLI help text
-ENTRYPOINT ["python", "main_cli.py"]
+# Set the default command using module execution
+ENTRYPOINT ["python", "-m", "cli.main"]
 CMD ["--help"]
