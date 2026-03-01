@@ -50,6 +50,14 @@ def test_update_flag(repo):
     retrieved = repo.get_flag("update_flag")
     assert retrieved.enabled is True
 
+def test_delete_flag(repo):
+    flag = FeatureFlag(name="to_delete", enabled=True)
+    repo.save_flag(flag)
+    assert repo.get_flag("to_delete") is not None
+    
+    repo.delete_flag("to_delete")
+    assert repo.get_flag("to_delete") is None
+
 def test_set_and_get_override(repo):
     repo.save_flag(FeatureFlag(name="target_flag", enabled=False))
     

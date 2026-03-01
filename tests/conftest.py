@@ -26,6 +26,16 @@ class InMemoryRepository(FlagRepository):
         flag.enabled = enabled
         return flag
 
+    def delete_flag(self, name: str) -> None:
+        if name in self.flags:
+            del self.flags[name]
+        
+        # Clean up any orphaned overrides manually in memory
+        for override_type in self.overrides.values():
+            for value_map in override_type.values():
+                if name in value_map:
+                    del value_map[name]
+
     def get_override(self, flag_name: str, override_type: str, value: str) -> Optional[bool]:
         return self.overrides.get(override_type, {}).get(value, {}).get(flag_name)
 

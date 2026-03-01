@@ -48,6 +48,12 @@ class SQLiteFlagRepository(FlagRepository):
             )
         raise ValueError(f"Flag {name} not found in database") # Engine should prevent this
 
+    def delete_flag(self, name: str) -> None:
+        row = self.session.query(FlagORM).filter_by(name=name).first()
+        if row:
+            self.session.delete(row)
+            self.session.commit()
+
     def get_override(self, flag_name: str, override_type: str, value: str) -> Optional[bool]:
         row = self.session.query(OverrideORM).filter_by(
             flag_name=flag_name,

@@ -75,3 +75,19 @@ def test_engine_can_delete_overrides(engine):
     
     # Reverts to global default
     assert engine.evaluate("dark_mode", {"user": "alice"}) is False
+
+def test_delete_flag_cascades_overrides_in_memory(engine):
+    engine.create_flag("cascade_test", enabled=False)
+    engine.set_override("cascade_test", "user", "alice", enabled=True)
+    
+    assert engine.evaluate("cascade_test", {"user": "alice"}) is True
+    
+    # Delete the flag
+    engine.delete_flag("cascade_test")
+    
+    # It shouldn't exist anymore
+    with pytest.raises(FlagNotFoundError):
+        engine.evaluate("cascade_test", {"user": "alice"})
+    
+    # And the override dict should be scrubbed cleanly by the InMemoryRepository
+    assert engine.repo.get_override("cascade_test", "user", "alice") is None

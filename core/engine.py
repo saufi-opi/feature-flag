@@ -24,8 +24,14 @@ class FeatureFlagEngine:
         return self.repo.get_all_flags()
 
     def update_flag(self, name: str, enabled: bool) -> FeatureFlag:
-        flag = self.get_flag(name)
+        """Update the global status of an existing feature flag."""
+        flag = self.get_flag(name) # Ensures it exists
         return self.repo.update_flag(flag.name, enabled)
+
+    def delete_flag(self, name: str) -> None:
+        """Delete a feature flag and cascade delete all its overrides."""
+        self.get_flag(name) # Ensures it exists before deleting
+        self.repo.delete_flag(name)
 
     def evaluate(self, flag_name: str, context: Optional[Dict[str, Any]] = None) -> bool:
         flag = self.get_flag(flag_name)

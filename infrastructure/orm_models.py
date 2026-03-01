@@ -12,7 +12,7 @@ class FlagORM(Base):
 class OverrideORM(Base):
     __tablename__ = "overrides"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    flag_name: Mapped[str] = mapped_column(String, ForeignKey("flags.name"), nullable=False)
+    flag_name: Mapped[str] = mapped_column(String, ForeignKey("flags.name", ondelete="CASCADE"), nullable=False)
     
     # Generic keys allow the lookup_chain to be completely dynamic
     override_type: Mapped[str] = mapped_column(String, nullable=False)   # e.g., "user", "group", "region"
