@@ -5,6 +5,8 @@ from core.engine import FeatureFlagEngine
 from core.exceptions import FlagNotFoundError, DuplicateFlagError
 from infrastructure.database import SessionLocal, init_db as _init_db
 from infrastructure.sqlite_repository import SQLiteFlagRepository
+from infrastructure.cache import InMemoryCacheBackend
+from infrastructure.cached_repository import CachedFlagRepository
 
 def get_engine() -> FeatureFlagEngine:
     """Helper to inject dependencies into the CLI commands"""
@@ -12,9 +14,12 @@ def get_engine() -> FeatureFlagEngine:
     _init_db()
     
     db = SessionLocal()
-    repo = SQLiteFlagRepository(db)
+    sqlite_repo = SQLiteFlagRepository(db)
+    cache_backend = InMemoryCacheBackend()
+    cached_repo = CachedFlagRepository(fallback_repository=sqlite_repo, cache=cache_backend)
+    
     # Using the same lookup chain as the tests
-    engine = FeatureFlagEngine(repo, lookup_chain=["user", "group", "region"])
+    engine = FeatureFlagEngine(cached_repo, lookup_chain=["user", "group", "region"])
     return engine
 
 @click.group()
