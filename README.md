@@ -156,3 +156,67 @@ docker compose -f docker/docker-compose.api.yml up api
 ```
 
 Once running, navigate to [http://localhost:8000/docs](http://localhost:8000/docs) in your browser to interact with the interactive Swagger UI.
+
+### API Examples
+
+```bash
+# List all feature flags
+curl http://localhost:8000/flags/
+
+# Create a new feature flag
+curl -X POST http://localhost:8000/flags/ \
+  -H "Content-Type: application/json" \
+  -d '{"name": "dark_mode", "enabled": true, "description": "Enable dark mode"}'
+
+# Set a context-specific override
+curl -X POST http://localhost:8000/flags/dark_mode/overrides \
+  -H "Content-Type: application/json" \
+  -d '{"override_type": "user", "value": "alice", "enabled": false}'
+
+# Evaluate a feature flag with context
+curl -X POST http://localhost:8000/flags/dark_mode/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{"context": {"user": "alice"}}'
+
+# Delete a flag and cascade delete its overrides
+curl -X DELETE http://localhost:8000/flags/dark_mode
+```
+
+## Running the Tests
+
+The project includes a robust test suite covering core logic, infrastructure patterns (like the caching proxy), and API routes.
+
+```bash
+# Create a virtual environment (if you haven't already)
+uv venv
+
+# Activate it (Mac/Linux)
+source .venv/bin/activate
+# Or on Windows:
+.venv\Scripts\activate
+
+# Make sure dependencies are installed
+uv sync --extra all --extra dev
+
+# Run the entire test suite
+uv run python -m pytest
+```
+
+## Assumptions & Tradeoffs
+
+- **Storage**: Used SQLite for simplicity and portability so the project can be run easily by reviewers without needing a separate database service. Because the application uses the `FlagRepository` Protocol and Clean Architecture, swapping to PostgreSQL or MySQL would only require a new class in `infrastructure/` and zero changes to the `core` engine.
+- **Caching**: Implemented an application-level in-memory cache proxy (`InMemoryCacheBackend` conforming to a `CacheBackend` Protocol) to reduce database reads on flag evaluations. The tradeoff is that this cache does not synchronize across multiple worker processes. If running with Uvicorn's `--workers 4`, each worker maintains its own cache.
+- **Framework Separation**: The core engine contains pure Python without FastAPI or Click dependencies. This took slightly more setup but allows the identical engine to power both interfaces securely.
+
+## What I'd Do Next with More Time
+
+1. **Distributed Caching**: Implement a `RedisCacheBackend` that conforms to the `CacheBackend` Protocol so that cache state is synchronized across a distributed deployment of multiple workers.
+2. **Management UI**: Build a modern React/Next.js frontend dashboard to visually manage feature flags, view audit logs, and easily attach complex rollout rules without using the CLI or direct API requests.
+3. **Authentication/Authorization**: Add an auth layer (e.g. JWT and OAuth2) to the FastAPI endpoints to ensure only authorized admins can create or modify flags, while evaluation endpoints might remain publicly accessible via API keys.
+4. **Enhanced Targeting Rules**: Extend the evaluation engine to handle percentage-based rollouts (e.g., 20% of users get the feature) and regex matching for flexible context evaluation.
+
+## AI Tools Disclosure
+
+In the interest of transparency for the evaluation process:
+- **Tool Used**: Antigravity (Google Deepmind AI Coding Assistant)
+- **Nature of Assistance**: Used to accelerate boilerplate generation, assist with architectural plan and decisions, generate isolated Pytest unit tests, and help draft this README documentation. All core logic and design paradigms were carefully reviewed and directed to adhere to SOLID principles and Clean Architecture.
